@@ -470,9 +470,7 @@ export default {
 export const cat = "cat";`
 		);
 
-		await runWrangler(
-			`pages functions build --outfile=public/_worker.bundle --compatibility-flag=nodejs_compat`
-		);
+		await runWrangler(`pages functions build --outfile=public/_worker.bundle`);
 
 		expect(existsSync("public/_worker.bundle")).toBe(true);
 		expect(std.out).toMatchInlineSnapshot(`
@@ -485,7 +483,8 @@ export const cat = "cat";`
 			workerBundleContents,
 			[
 				[/------formdata-undici-0.[0-9]*/g, "------formdata-undici-0.test"],
-				[/functionsWorker-0.[0-9]*.js/g, "functionsWorker-0.test.js"],
+				[/bundledWorker-0.[0-9]*.mjs/g, "bundledWorker-0.test.mjs"],
+				[/bundledWorker-0.[0-9]*.map/g, "bundledWorker-0.test.map"],
 			]
 		);
 
@@ -493,12 +492,15 @@ export const cat = "cat";`
 		"------formdata-undici-0.test
 		Content-Disposition: form-data; name=\\"metadata\\"
 
-		{\\"main_module\\":\\"functionsWorker-0.test.js\\"}
+		{\\"main_module\\":\\"bundledWorker-0.test.mjs\\"}
 		------formdata-undici-0.test
-		Content-Disposition: form-data; name=\\"functionsWorker-0.test.js\\"; filename=\\"functionsWorker-0.test.js\\"
+		Content-Disposition: form-data; name=\\"bundledWorker-0.test.mjs\\"; filename=\\"bundledWorker-0.test.mjs\\"
 		Content-Type: application/javascript+module
 
-		import { cat } from \\"./cat.js\\";
+		// _worker.js/cat.js
+		var cat = \\"cat\\";
+
+		// _worker.js/index.js
 		var worker_default = {
 		  async fetch(request, env) {
 		    return new Response(\\"Hello from _worker.js/index.js\\" + cat);
@@ -507,6 +509,7 @@ export const cat = "cat";`
 		export {
 		  worker_default as default
 		};
+		//# sourceMappingURL=bundledWorker-0.test.mjs.map
 
 		------formdata-undici-0.test
 		Content-Disposition: form-data; name=\\"cat.js\\"; filename=\\"cat.js\\"
